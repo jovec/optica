@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureOrganizationMember;
+use App\Http\Middleware\IdentifyOrganization;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +27,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureLivewire();
+    }
+
+    /**
+     * Run the organization middleware on Livewire updates too.
+     */
+    protected function configureLivewire(): void
+    {
+        Livewire::addPersistentMiddleware([
+            IdentifyOrganization::class,
+            EnsureOrganizationMember::class,
+        ]);
     }
 
     /**
