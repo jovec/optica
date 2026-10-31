@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureOrganizationMember;
+use App\Http\Middleware\IdentifyOrganization;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'organization' => IdentifyOrganization::class,
+            'member' => EnsureOrganizationMember::class,
+        ]);
+
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: IdentifyOrganization::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

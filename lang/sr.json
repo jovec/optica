@@ -1,8 +1,11 @@
 {
     "Dashboard": "Kontrolna tabla",
+    "Doctor": "Doktor",
     "Log out": "Odjavi se",
+    "Owner": "Vlasnik",
     "Patients": "Pacijenti",
     "Platform": "Platforma",
     "Settings": "Podešavanja",
+    "Staff": "Osoblje",
     "Toggle sidebar": "Prikaži/sakrij meni"
 }
