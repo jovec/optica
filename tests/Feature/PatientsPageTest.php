@@ -1,18 +1,18 @@
 <?php
 
 use App\Enums\OrganizationRole;
+use App\Models\Domain;
 use App\Models\Organization;
 use App\Models\Patient;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->organization = Organization::create(['name' => 'Optika Test', 'slug' => 'test']);
-    $this->organization->domains()->create(['domain' => 'localhost']);
+    $this->organization = Organization::factory()->create();
+    Domain::factory()->for($this->organization)->create(['domain' => 'localhost']);
 });
 
 test('members can visit the patients page', function () {
-    $user = User::factory()->create();
-    $this->organization->users()->attach($user, ['role' => OrganizationRole::Staff]);
+    $user = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Staff])->create();
     $this->actingAs($user);
 
     $response = $this->get(route('patients.index'));
@@ -29,19 +29,13 @@ test('users from another organization cannot visit the patients page', function 
 });
 
 test('the patients page lists only patients of the current organization', function () {
-    $other = Organization::create(['name' => 'Optika Druga', 'slug' => 'druga']);
+    Patient::factory()->for(Organization::factory())->create(['last_name' => 'Johnson']);
+    Patient::factory()->for($this->organization)->create(['last_name' => 'Wilson']);
 
-    app()->instance('currentOrganization', $other);
-    Patient::create(['first_name' => 'Petar', 'last_name' => 'Petrović']);
-
-    app()->instance('currentOrganization', $this->organization);
-    Patient::create(['first_name' => 'Ana', 'last_name' => 'Jovanović']);
-
-    $user = User::factory()->create();
-    $this->organization->users()->attach($user, ['role' => OrganizationRole::Staff]);
+    $user = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Staff])->create();
     $this->actingAs($user);
 
     $response = $this->get(route('patients.index'));
-    $response->assertSee('Jovanović');
-    $response->assertDontSee('Petrović');
+    $response->assertSee('Wilson');
+    $response->assertDontSee('Johnson');
 });

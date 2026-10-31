@@ -4,29 +4,29 @@ use App\Models\Organization;
 use App\Models\Patient;
 
 beforeEach(function () {
-    $this->danka = Organization::create(['name' => 'Optika Danka', 'slug' => 'danka']);
-    $this->marko = Organization::create(['name' => 'Optika Marko', 'slug' => 'marko']);
+    $this->clearVision = Organization::create(['name' => 'Clear Vision Optics', 'slug' => 'clearvision']);
+    $this->brightEyes = Organization::create(['name' => 'Bright Eyes Optical', 'slug' => 'brighteyes']);
 });
 
 test('new records get the current organization', function () {
-    app()->instance('currentOrganization', $this->danka);
+    app()->instance('currentOrganization', $this->clearVision);
 
-    $patient = Patient::create(['first_name' => 'Ana', 'last_name' => 'Jovanović']);
+    $patient = Patient::create(['first_name' => 'Emma', 'last_name' => 'Wilson']);
 
-    expect($patient->organization_id)->toBe($this->danka->id);
+    expect($patient->organization_id)->toBe($this->clearVision->id);
 });
 
 test('queries only see the current organization', function () {
-    app()->instance('currentOrganization', $this->danka);
-    Patient::create(['first_name' => 'Ana', 'last_name' => 'Jovanović']);
+    app()->instance('currentOrganization', $this->clearVision);
+    Patient::create(['first_name' => 'Emma', 'last_name' => 'Wilson']);
 
-    app()->instance('currentOrganization', $this->marko);
-    $petar = Patient::create(['first_name' => 'Petar', 'last_name' => 'Petrović']);
+    app()->instance('currentOrganization', $this->brightEyes);
+    $liam = Patient::create(['first_name' => 'Liam', 'last_name' => 'Johnson']);
 
-    expect(Patient::pluck('first_name')->all())->toBe(['Petar']);
+    expect(Patient::pluck('first_name')->all())->toBe(['Liam']);
 
-    app()->instance('currentOrganization', $this->danka);
+    app()->instance('currentOrganization', $this->clearVision);
 
-    expect(Patient::pluck('first_name')->all())->toBe(['Ana'])
-        ->and(Patient::find($petar->id))->toBeNull();
+    expect(Patient::pluck('first_name')->all())->toBe(['Emma'])
+        ->and(Patient::find($liam->id))->toBeNull();
 });

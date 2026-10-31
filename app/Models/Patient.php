@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToOrganization;
+use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -22,7 +24,8 @@ use Illuminate\Support\Carbon;
 #[Fillable(['first_name', 'last_name', 'date_of_birth', 'phone', 'email', 'notes'])]
 class Patient extends Model
 {
-    use BelongsToOrganization;
+    /** @use HasFactory<PatientFactory> */
+    use BelongsToOrganization, HasFactory;
 
     /**
      * Get the attributes that should be cast.

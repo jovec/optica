@@ -5,7 +5,7 @@ use App\Models\Organization;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->organization = Organization::create(['name' => 'Optika Test', 'slug' => 'test']);
+    $this->organization = Organization::create(['name' => 'Test Optics', 'slug' => 'test']);
     $this->organization->domains()->create(['domain' => 'localhost']);
 });
 
@@ -21,7 +21,7 @@ test('members can visit the dashboard', function () {
 
     $response = $this->get(route('dashboard'));
     $response->assertOk();
-    $response->assertSee('Optika Test');
+    $response->assertSee('Test Optics');
 });
 
 test('users from another organization get a 403', function () {
