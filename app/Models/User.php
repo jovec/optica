@@ -81,6 +81,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Determine if the user has one of the given roles in the organization.
+     */
+    public function hasRoleIn(int $organizationId, OrganizationRole ...$roles): bool
+    {
+        return in_array($this->roleIn($organizationId), $roles, true);
+    }
+
+    /**
      * Get the user's initials
      */
     public function initials(): string

@@ -7,6 +7,7 @@ use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -37,5 +38,15 @@ class Patient extends Model
         return [
             'date_of_birth' => 'date',
         ];
+    }
+
+    /**
+     * Get the patient's eye examinations, newest first.
+     *
+     * @return HasMany<Examination, $this>
+     */
+    public function examinations(): HasMany
+    {
+        return $this->hasMany(Examination::class)->latest('examined_at');
     }
 }
