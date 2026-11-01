@@ -3,12 +3,15 @@
 use App\Livewire\Forms\PatientForm;
 use App\Models\Patient;
 use Flux\Flux;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 new #[Title('Patients')] class extends Component {
+    use WithPagination;
+
     public string $search = '';
 
     public PatientForm $form;
@@ -19,6 +22,14 @@ new #[Title('Patients')] class extends Component {
     public function mount(): void
     {
         $this->authorize('viewAny', Patient::class);
+    }
+
+    /**
+     * Go back to the first page when the search changes.
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     /**
@@ -80,10 +91,10 @@ new #[Title('Patients')] class extends Component {
     /**
      * Get the patients of the current organization.
      *
-     * @return Collection<int, Patient>
+     * @return LengthAwarePaginator<int, Patient>
      */
     #[Computed]
-    public function patients(): Collection
+    public function patients(): LengthAwarePaginator
     {
         return Patient::query()
             ->when($this->search !== '', function ($query) {
@@ -94,7 +105,7 @@ new #[Title('Patients')] class extends Component {
             })
             ->orderBy('last_name')
             ->orderBy('first_name')
-            ->get();
+            ->paginate(15);
     }
 }; ?>
 
@@ -109,7 +120,7 @@ new #[Title('Patients')] class extends Component {
 
     <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Search patients...')" />
 
-    <flux:table>
+    <flux:table :paginate="$this->patients">
         <flux:table.columns>
             <flux:table.column>{{ __('Name') }}</flux:table.column>
             <flux:table.column>{{ __('Date of birth') }}</flux:table.column>
