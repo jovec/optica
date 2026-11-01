@@ -14,10 +14,14 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property string|null $address
+ * @property string|null $city
+ * @property string|null $phone
+ * @property string|null $email
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'slug'])]
+#[Fillable(['name', 'slug', 'address', 'city', 'phone', 'email'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */

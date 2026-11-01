@@ -23,6 +23,10 @@ class OrganizationFactory extends Factory
         return [
             'name' => $name.' Optics',
             'slug' => Str::slug($name),
+            'address' => fake()->streetAddress(),
+            'city' => fake()->city(),
+            'phone' => fake()->phoneNumber(),
+            'email' => fake()->companyEmail(),
         ];
     }
 }
