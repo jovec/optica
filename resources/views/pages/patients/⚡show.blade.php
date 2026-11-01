@@ -1,8 +1,12 @@
 <?php
 
+use App\Livewire\Forms\ExaminationForm;
 use App\Livewire\Forms\PatientForm;
+use App\Models\Examination;
 use App\Models\Patient;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -10,6 +14,8 @@ new #[Title('Patient')] class extends Component {
     public Patient $patient;
 
     public PatientForm $form;
+
+    public ExaminationForm $examinationForm;
 
     /**
      * Make sure the user can see the patient.
@@ -19,6 +25,61 @@ new #[Title('Patient')] class extends Component {
         $this->authorize('view', $patient);
 
         $this->patient = $patient;
+    }
+
+    /**
+     * Get the patient's examinations with the doctor who did them.
+     *
+     * @return Collection<int, Examination>
+     */
+    #[Computed]
+    public function examinations(): Collection
+    {
+        return $this->patient->examinations()->with('examiner')->get();
+    }
+
+    /**
+     * Open the examination modal with an empty form.
+     */
+    public function createExamination(): void
+    {
+        $this->authorize('create', Examination::class);
+
+        $this->examinationForm->resetErrorBag();
+        $this->examinationForm->start();
+
+        Flux::modal('examination-form')->show();
+    }
+
+    /**
+     * Open the examination modal with the examination's data.
+     */
+    public function editExamination(int $id): void
+    {
+        $examination = $this->patient->examinations()->findOrFail($id);
+
+        $this->authorize('update', $examination);
+
+        $this->examinationForm->resetErrorBag();
+        $this->examinationForm->setExamination($examination);
+
+        Flux::modal('examination-form')->show();
+    }
+
+    /**
+     * Save the examination and close the modal.
+     */
+    public function saveExamination(): void
+    {
+        if ($this->examinationForm->examination) {
+            $this->authorize('update', $this->examinationForm->examination);
+            $this->examinationForm->update();
+        } else {
+            $this->authorize('create', Examination::class);
+            $this->examinationForm->store($this->patient);
+        }
+
+        Flux::modal('examination-form')->close();
     }
 
     /**
@@ -108,5 +169,50 @@ new #[Title('Patient')] class extends Component {
         </div>
     </flux:card>
 
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <flux:heading size="lg">{{ __('Examinations') }}</flux:heading>
+
+            @can('create', App\Models\Examination::class)
+                <flux:button wire:click="createExamination" variant="primary" icon="plus">{{ __('New examination') }}</flux:button>
+            @endcan
+        </div>
+
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column>{{ __('Date') }}</flux:table.column>
+                <flux:table.column>OD</flux:table.column>
+                <flux:table.column>OS</flux:table.column>
+                <flux:table.column>ADD</flux:table.column>
+                <flux:table.column>PD</flux:table.column>
+                <flux:table.column>{{ __('Examined by') }}</flux:table.column>
+                <flux:table.column></flux:table.column>
+            </flux:table.columns>
+
+            <flux:table.rows>
+                @forelse ($this->examinations as $examination)
+                    <flux:table.row :key="$examination->id">
+                        <flux:table.cell>{{ $examination->examined_at->format('d.m.Y.') }}</flux:table.cell>
+                        <flux:table.cell class="font-mono">{{ $examination->prescription('od') }}</flux:table.cell>
+                        <flux:table.cell class="font-mono">{{ $examination->prescription('os') }}</flux:table.cell>
+                        <flux:table.cell class="font-mono">{{ $examination->od_addition ? Examination::formatDiopter($examination->od_addition) : '—' }}</flux:table.cell>
+                        <flux:table.cell class="font-mono">{{ $examination->pd ?? '—' }}</flux:table.cell>
+                        <flux:table.cell>{{ $examination->examiner?->name ?? '—' }}</flux:table.cell>
+                        <flux:table.cell align="end">
+                            @can('update', $examination)
+                                <flux:button wire:click="editExamination({{ $examination->id }})" variant="ghost" size="sm" icon="pencil-square" :aria-label="__('Edit')" />
+                            @endcan
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7">{{ __('No examinations yet.') }}</flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
+
     <x-patients.form-modal :editing="true" />
+    <x-examinations.form-modal :editing="$examinationForm->examination !== null" />
 </div>

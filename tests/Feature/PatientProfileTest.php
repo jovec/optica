@@ -2,6 +2,7 @@
 
 use App\Enums\OrganizationRole;
 use App\Models\Domain;
+use App\Models\Examination;
 use App\Models\Organization;
 use App\Models\Patient;
 use App\Models\User;
@@ -90,4 +91,20 @@ test('staff sees the profile without edit and delete buttons', function () {
     Livewire::test('pages::patients.show', ['patient' => $patient])->call('delete')->assertForbidden();
 
     expect(Patient::count())->toBe(1);
+});
+
+test('the profile lists the patient examinations', function () {
+    $patient = Patient::factory()->for($this->organization)->create();
+    $doctor = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Doctor])->create(['name' => 'James Carter']);
+
+    Examination::factory()->for($patient)->for($doctor, 'examiner')->create([
+        'od_sphere' => -1.25, 'od_cylinder' => -0.5, 'od_axis' => 90,
+    ]);
+
+    $this->actingAs($doctor);
+
+    $response = $this->get(route('patients.show', $patient));
+    $response->assertOk();
+    $response->assertSee('-1.25 / -0.50 x 90');
+    $response->assertSee('James Carter');
 });

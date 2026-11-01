@@ -54,10 +54,7 @@ class PatientPolicy
      */
     protected function canManage(User $user, int $organizationId): bool
     {
-        return in_array($user->roleIn($organizationId), [
-            OrganizationRole::Owner,
-            OrganizationRole::Doctor,
-        ]);
+        return $user->hasRoleIn($organizationId, OrganizationRole::Owner, OrganizationRole::Doctor);
     }
 
     /**
