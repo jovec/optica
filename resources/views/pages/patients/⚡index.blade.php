@@ -121,7 +121,9 @@ new #[Title('Patients')] class extends Component {
         <flux:table.rows>
             @forelse ($this->patients as $patient)
                 <flux:table.row :key="$patient->id">
-                    <flux:table.cell variant="strong">{{ $patient->last_name }} {{ $patient->first_name }}</flux:table.cell>
+                    <flux:table.cell variant="strong">
+                        <flux:link :href="route('patients.show', $patient)" variant="ghost" wire:navigate>{{ $patient->last_name }} {{ $patient->first_name }}</flux:link>
+                    </flux:table.cell>
                     <flux:table.cell>{{ $patient->date_of_birth?->format('d.m.Y.') }}</flux:table.cell>
                     <flux:table.cell>{{ $patient->phone }}</flux:table.cell>
                     <flux:table.cell>{{ $patient->email }}</flux:table.cell>
@@ -150,31 +152,5 @@ new #[Title('Patients')] class extends Component {
         </flux:table.rows>
     </flux:table>
 
-    <flux:modal name="patient-form" class="md:w-lg">
-        <form wire:submit="save" class="space-y-6">
-            <flux:heading size="lg">{{ $form->patient ? __('Edit patient') : __('New patient') }}</flux:heading>
-
-            <div class="grid gap-4 sm:grid-cols-2">
-                <flux:input wire:model="form.first_name" :label="__('First name')" required />
-                <flux:input wire:model="form.last_name" :label="__('Last name')" required />
-            </div>
-
-            <flux:input wire:model="form.date_of_birth" :label="__('Date of birth')" type="date" />
-
-            <div class="grid gap-4 sm:grid-cols-2">
-                <flux:input wire:model="form.phone" :label="__('Phone')" type="tel" />
-                <flux:input wire:model="form.email" :label="__('Email')" type="email" />
-            </div>
-
-            <flux:textarea wire:model="form.notes" :label="__('Notes')" rows="3" />
-
-            <div class="flex justify-end gap-2">
-                <flux:modal.close>
-                    <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
-                </flux:modal.close>
-
-                <flux:button variant="primary" type="submit">{{ __('Save') }}</flux:button>
-            </div>
-        </form>
-    </flux:modal>
+    <x-patients.form-modal :editing="$form->patient !== null" />
 </div>

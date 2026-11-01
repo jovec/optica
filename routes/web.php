@@ -8,6 +8,7 @@ Route::middleware(['organization', 'auth', 'verified', 'member'])->group(functio
     Route::view('dashboard', 'dashboard')->name('dashboard');
 
     Route::livewire('patients', 'pages::patients.index')->name('patients.index');
+    Route::livewire('patients/{patient}', 'pages::patients.show')->name('patients.show');
 });
 
 require __DIR__.'/settings.php';
