@@ -10,6 +10,14 @@ use App\Models\User;
 class ExaminationPolicy
 {
     /**
+     * Determine whether the user can see the examination.
+     */
+    public function view(User $user, Examination $examination): bool
+    {
+        return $user->roleIn($examination->organization_id) !== null;
+    }
+
+    /**
      * Determine whether the user can add examinations.
      */
     public function create(User $user): bool

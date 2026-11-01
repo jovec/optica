@@ -199,6 +199,8 @@ new #[Title('Patient')] class extends Component {
                         <flux:table.cell class="font-mono">{{ $examination->pd ?? '—' }}</flux:table.cell>
                         <flux:table.cell>{{ $examination->examiner?->name ?? '—' }}</flux:table.cell>
                         <flux:table.cell align="end">
+                            <flux:button :href="route('examinations.print', $examination)" target="_blank" variant="ghost" size="sm" icon="printer" :aria-label="__('Print')" />
+
                             @can('update', $examination)
                                 <flux:button wire:click="editExamination({{ $examination->id }})" variant="ghost" size="sm" icon="pencil-square" :aria-label="__('Edit')" />
                             @endcan

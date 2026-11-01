@@ -101,6 +101,16 @@ class Examination extends Model
     }
 
     /**
+     * Get one diopter field formatted for display, or a dash when empty.
+     */
+    public function diopter(string $field): string
+    {
+        $value = $this->getAttribute($field);
+
+        return $value === null ? '—' : static::formatDiopter($value);
+    }
+
+    /**
      * Format a diopter value with its sign and two decimals, e.g. "+1.50" or "-0.25".
      */
     public static function formatDiopter(string $value): string
