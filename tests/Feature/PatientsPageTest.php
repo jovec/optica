@@ -30,7 +30,7 @@ test('users from another organization cannot visit the patients page', function 
 });
 
 test('the patients page lists only patients of the current organization', function () {
-    Patient::factory()->for(Organization::factory())->create(['last_name' => 'Johnson']);
+    Patient::factory()->for(Organization::factory())->create(['last_name' => 'Outsiderovic']);
     Patient::factory()->for($this->organization)->create(['last_name' => 'Wilson']);
 
     $user = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Staff])->create();
@@ -38,7 +38,7 @@ test('the patients page lists only patients of the current organization', functi
 
     $response = $this->get(route('patients.index'));
     $response->assertSee('Wilson');
-    $response->assertDontSee('Johnson');
+    $response->assertDontSee('Outsiderovic');
 });
 
 test('the patients list can be searched by name', function () {
@@ -53,6 +53,36 @@ test('the patients list can be searched by name', function () {
         ->set('search', 'wil')
         ->assertSee('Wilson')
         ->assertDontSee('Johnson');
+});
+
+test('the patients list shows 15 patients per page', function () {
+    foreach (range(1, 20) as $number) {
+        Patient::factory()->for($this->organization)->create(['last_name' => sprintf('Patient%02d', $number)]);
+    }
+
+    $user = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Staff])->create();
+    $this->actingAs($user);
+    app()->instance('currentOrganization', $this->organization);
+
+    Livewire::test('pages::patients.index')
+        ->assertSee('Patient15')
+        ->assertDontSee('Patient16')
+        ->call('nextPage')
+        ->assertSee('Patient16')
+        ->assertSee('Patient20')
+        ->assertDontSee('Patient15');
+});
+
+test('searching goes back to the first page', function () {
+    $user = User::factory()->hasAttached($this->organization, ['role' => OrganizationRole::Staff])->create();
+    $this->actingAs($user);
+    app()->instance('currentOrganization', $this->organization);
+
+    Livewire::test('pages::patients.index')
+        ->call('setPage', 2)
+        ->assertSet('paginators.page', 2)
+        ->set('search', 'wil')
+        ->assertSet('paginators.page', 1);
 });
 
 test('livewire updates do not leak patients of another organization', function () {
