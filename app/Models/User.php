@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrganizationRole;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -67,6 +68,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function isMemberOf(Organization $organization): bool
     {
         return $this->organizations()->whereKey($organization->id)->exists();
+    }
+
+    /**
+     * Get the user's role in the given organization.
+     */
+    public function roleIn(int $organizationId): ?OrganizationRole
+    {
+        $organization = $this->organizations->firstWhere('id', $organizationId);
+
+        return OrganizationRole::tryFrom($organization->pivot->role ?? '');
     }
 
     /**
