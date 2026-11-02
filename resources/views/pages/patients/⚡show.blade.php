@@ -121,12 +121,29 @@ new #[Title('Patient')] class extends Component {
     }
 }; ?>
 
-<div class="space-y-6">
+<div class="space-y-8">
     <div>
-        <flux:link :href="route('patients.index')" variant="subtle" wire:navigate>← {{ __('Patients') }}</flux:link>
+        <a href="{{ route('patients.index') }}" wire:navigate class="inline-flex items-center gap-1 text-sm font-medium text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+            <flux:icon.arrow-left variant="micro" />
+            {{ __('Patients') }}
+        </a>
 
-        <div class="mt-2 flex items-center justify-between">
-            <flux:heading size="xl">{{ $patient->last_name }} {{ $patient->first_name }}</flux:heading>
+        <div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+                <x-initials-avatar :name="$patient->first_name.' '.$patient->last_name" class="size-14! text-lg!" />
+
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">{{ $patient->last_name }} {{ $patient->first_name }}</h1>
+
+                    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        @if ($patient->date_of_birth)
+                            <span>{{ trans_choice(':count year|:count years', $patient->date_of_birth->age, ['count' => $patient->date_of_birth->age]) }}</span>
+                            <span class="text-zinc-300 dark:text-zinc-600">•</span>
+                        @endif
+                        <span>{{ trans_choice(':count examination|:count examinations', $this->examinations->count(), ['count' => $this->examinations->count()]) }}</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="flex gap-2">
                 @can('update', $patient)
@@ -137,8 +154,9 @@ new #[Title('Patient')] class extends Component {
                     <flux:button
                         wire:click="delete"
                         wire:confirm="{{ __('Are you sure you want to delete this patient?') }}"
-                        variant="danger"
+                        variant="ghost"
                         icon="trash"
+                        class="text-red-600! hover:bg-red-50! dark:hover:bg-red-500/10!"
                     >
                         {{ __('Delete') }}
                     </flux:button>
@@ -147,72 +165,89 @@ new #[Title('Patient')] class extends Component {
         </div>
     </div>
 
-    <flux:card class="space-y-4">
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <flux:text>{{ __('Date of birth') }}</flux:text>
-                <flux:heading>{{ $patient->date_of_birth?->format('d.m.Y.') ?? '—' }}</flux:heading>
+    <div class="grid gap-6 lg:grid-cols-3">
+        <x-panel :title="__('Details')" class="h-fit">
+            <dl class="divide-y divide-zinc-100 dark:divide-white/5">
+                @foreach ([
+                    ['calendar', __('Date of birth'), $patient->date_of_birth?->format('d.m.Y.')],
+                    ['phone', __('Phone'), $patient->phone],
+                    ['envelope', __('Email'), $patient->email],
+                ] as [$icon, $label, $value])
+                    <div class="flex items-center gap-3 px-5 py-3.5">
+                        <flux:icon :name="$icon" variant="mini" class="size-4 text-zinc-400" />
+                        <dt class="text-sm text-zinc-500 dark:text-zinc-400">{{ $label }}</dt>
+                        <dd class="ms-auto truncate text-sm font-medium text-zinc-900 tabular-nums dark:text-white">{{ $value ?? '—' }}</dd>
+                    </div>
+                @endforeach
+            </dl>
+
+            <div class="border-t border-zinc-100 px-5 py-4 dark:border-white/5">
+                <p class="text-xs font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">{{ __('Notes') }}</p>
+                <p class="mt-2 text-sm whitespace-pre-line text-zinc-700 dark:text-zinc-300">{{ $patient->notes ?? '—' }}</p>
             </div>
-            <div>
-                <flux:text>{{ __('Phone') }}</flux:text>
-                <flux:heading>{{ $patient->phone ?? '—' }}</flux:heading>
-            </div>
-            <div>
-                <flux:text>{{ __('Email') }}</flux:text>
-                <flux:heading>{{ $patient->email ?? '—' }}</flux:heading>
-            </div>
-        </div>
+        </x-panel>
 
-        <div>
-            <flux:text>{{ __('Notes') }}</flux:text>
-            <flux:heading class="whitespace-pre-line">{{ $patient->notes ?? '—' }}</flux:heading>
-        </div>
-    </flux:card>
+        <x-panel :title="__('Examinations')" :description="__('Newest first')" class="lg:col-span-2">
+            <x-slot:actions>
+                @can('create', App\Models\Examination::class)
+                    <flux:button wire:click="createExamination" variant="primary" size="sm" icon="plus">{{ __('New examination') }}</flux:button>
+                @endcan
+            </x-slot:actions>
 
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <flux:heading size="lg">{{ __('Examinations') }}</flux:heading>
-
-            @can('create', App\Models\Examination::class)
-                <flux:button wire:click="createExamination" variant="primary" icon="plus">{{ __('New examination') }}</flux:button>
-            @endcan
-        </div>
-
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column>{{ __('Date') }}</flux:table.column>
-                <flux:table.column>OD</flux:table.column>
-                <flux:table.column>OS</flux:table.column>
-                <flux:table.column>ADD</flux:table.column>
-                <flux:table.column>PD</flux:table.column>
-                <flux:table.column>{{ __('Examined by') }}</flux:table.column>
-                <flux:table.column></flux:table.column>
-            </flux:table.columns>
-
-            <flux:table.rows>
+            <ul class="divide-y divide-zinc-100 dark:divide-white/5">
                 @forelse ($this->examinations as $examination)
-                    <flux:table.row :key="$examination->id">
-                        <flux:table.cell>{{ $examination->examined_at->format('d.m.Y.') }}</flux:table.cell>
-                        <flux:table.cell class="font-mono">{{ $examination->prescription('od') }}</flux:table.cell>
-                        <flux:table.cell class="font-mono">{{ $examination->prescription('os') }}</flux:table.cell>
-                        <flux:table.cell class="font-mono">{{ $examination->od_addition ? Examination::formatDiopter($examination->od_addition) : '—' }}</flux:table.cell>
-                        <flux:table.cell class="font-mono">{{ $examination->pd ?? '—' }}</flux:table.cell>
-                        <flux:table.cell>{{ $examination->examiner?->name ?? '—' }}</flux:table.cell>
-                        <flux:table.cell align="end">
-                            <flux:button :href="route('examinations.print', $examination)" target="_blank" variant="ghost" size="sm" icon="printer" :aria-label="__('Print')" />
+                    <li wire:key="examination-{{ $examination->id }}" class="px-5 py-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <span class="flex size-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 ring-inset dark:bg-indigo-500/10 dark:text-indigo-400 dark:ring-indigo-500/20">
+                                    <flux:icon.eye variant="mini" class="size-4" />
+                                </span>
 
-                            @can('update', $examination)
-                                <flux:button wire:click="editExamination({{ $examination->id }})" variant="ghost" size="sm" icon="pencil-square" :aria-label="__('Edit')" />
-                            @endcan
-                        </flux:table.cell>
-                    </flux:table.row>
+                                <div>
+                                    <p class="text-sm font-semibold text-zinc-900 tabular-nums dark:text-white">{{ $examination->examined_at->format('d.m.Y.') }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $examination->examiner?->name ?? '—' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-1">
+                                <flux:button :href="route('examinations.print', $examination)" target="_blank" variant="ghost" size="sm" icon="printer" :tooltip="__('Print')" :aria-label="__('Print')" />
+
+                                @can('update', $examination)
+                                    <flux:button wire:click="editExamination({{ $examination->id }})" variant="ghost" size="sm" icon="pencil-square" :tooltip="__('Edit')" :aria-label="__('Edit')" />
+                                @endcan
+                            </div>
+                        </div>
+
+                        <div class="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                            <div class="rounded-xl bg-zinc-50 px-3 py-2 dark:bg-white/5">
+                                <p class="text-[11px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">OD</p>
+                                <p class="font-mono text-sm text-zinc-900 dark:text-white">{{ $examination->prescription('od') }}</p>
+                            </div>
+                            <div class="rounded-xl bg-zinc-50 px-3 py-2 dark:bg-white/5">
+                                <p class="text-[11px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">OS</p>
+                                <p class="font-mono text-sm text-zinc-900 dark:text-white">{{ $examination->prescription('os') }}</p>
+                            </div>
+                            <div class="rounded-xl bg-zinc-50 px-3 py-2 dark:bg-white/5">
+                                <p class="text-[11px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">ADD</p>
+                                <p class="font-mono text-sm text-zinc-900 dark:text-white">{{ $examination->diopter('od_addition') }}</p>
+                            </div>
+                            <div class="rounded-xl bg-zinc-50 px-3 py-2 dark:bg-white/5">
+                                <p class="text-[11px] font-medium tracking-wide text-zinc-500 uppercase dark:text-zinc-400">PD</p>
+                                <p class="font-mono text-sm text-zinc-900 dark:text-white">{{ $examination->pd ? $examination->pd.' mm' : '—' }}</p>
+                            </div>
+                        </div>
+
+                        @if ($examination->notes)
+                            <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">{{ $examination->notes }}</p>
+                        @endif
+                    </li>
                 @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="7">{{ __('No examinations yet.') }}</flux:table.cell>
-                    </flux:table.row>
+                    <li>
+                        <x-empty-state icon="eye" :title="__('No examinations yet.')" :description="__('Examinations you add will show up here, newest first.')" />
+                    </li>
                 @endforelse
-            </flux:table.rows>
-        </flux:table>
+            </ul>
+        </x-panel>
     </div>
 
     <x-patients.form-modal :editing="true" />

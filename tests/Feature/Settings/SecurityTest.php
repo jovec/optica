@@ -26,10 +26,10 @@ test('security settings page can be rendered', function () {
 
     $response->assertOk();
 
-    $response->assertSee('Passkeys');
-    $response->assertSee('No passkeys yet');
-    $response->assertSee('Two-factor authentication');
-    $response->assertSee('Enable 2FA');
+    $response->assertSee('Passkey');
+    $response->assertSee('Još nema passkey-a');
+    $response->assertSee('Prijava u dva koraka');
+    $response->assertSee('Uključi 2FA');
 });
 
 test('security settings page requires password confirmation when enabled', function () {
@@ -50,10 +50,10 @@ test('security settings page renders without two factor when feature is disabled
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertOk()
-        ->assertSee('Update password')
-        ->assertDontSee('Manage your passkeys for passwordless sign-in')
-        ->assertDontSee('Add a passkey to sign in without a password')
-        ->assertDontSee('Two-factor authentication');
+        ->assertSee('Promeni lozinku')
+        ->assertDontSee('Upravljajte passkey-ima za prijavu bez lozinke')
+        ->assertDontSee('Dodajte passkey da biste se prijavljivali bez lozinke')
+        ->assertDontSee('Prijava u dva koraka');
 });
 
 test('two factor authentication disabled when confirmation abandoned between requests', function () {

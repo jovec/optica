@@ -115,89 +115,92 @@ new #[Title('Team')] class extends Component {
     }
 }; ?>
 
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <flux:heading size="xl">{{ __('Team') }}</flux:heading>
+<div class="space-y-8">
+    <x-page-header :title="__('Team')" :description="__('People who work in your optics and what they are allowed to do.')">
+        <x-slot:actions>
+            @can('create', App\Models\Invitation::class)
+                <flux:button wire:click="create" variant="primary" icon="user-plus">{{ __('Invite member') }}</flux:button>
+            @endcan
+        </x-slot:actions>
+    </x-page-header>
 
-        @can('create', App\Models\Invitation::class)
-            <flux:button wire:click="create" variant="primary" icon="user-plus">{{ __('Invite member') }}</flux:button>
-        @endcan
-    </div>
-
-    <flux:table>
-        <flux:table.columns>
-            <flux:table.column>{{ __('Name') }}</flux:table.column>
-            <flux:table.column>{{ __('Email') }}</flux:table.column>
-            <flux:table.column>{{ __('Role') }}</flux:table.column>
-        </flux:table.columns>
-
-        <flux:table.rows>
+    <x-panel :title="__('Members')" :description="trans_choice(':count person|:count people', $this->members->count(), ['count' => $this->members->count()])">
+        <ul class="divide-y divide-zinc-100 dark:divide-white/5">
             @foreach ($this->members as $member)
-                <flux:table.row :key="$member->id">
-                    <flux:table.cell variant="strong">{{ $member->name }}</flux:table.cell>
-                    <flux:table.cell>{{ $member->email }}</flux:table.cell>
-                    <flux:table.cell>{{ OrganizationRole::tryFrom($member->pivot->role)?->label() }}</flux:table.cell>
-                </flux:table.row>
+                <li wire:key="member-{{ $member->id }}" class="flex items-center gap-4 px-5 py-3.5">
+                    <x-initials-avatar :name="$member->name" />
+
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-zinc-900 dark:text-white">
+                            {{ $member->name }}
+                            @if ($member->is(auth()->user()))
+                                <span class="ms-1 text-xs font-normal text-zinc-500 dark:text-zinc-400">({{ __('you') }})</span>
+                            @endif
+                        </p>
+                        <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $member->email }}</p>
+                    </div>
+
+                    <x-role-badge :role="OrganizationRole::tryFrom($member->pivot->role)" />
+                </li>
             @endforeach
-        </flux:table.rows>
-    </flux:table>
+        </ul>
+    </x-panel>
 
     @can('viewAny', App\Models\Invitation::class)
-        <div class="space-y-4">
-            <flux:heading size="lg">{{ __('Pending invitations') }}</flux:heading>
+        <x-panel :title="__('Pending invitations')" :description="__('Links stay valid for 7 days.')">
+            <ul class="divide-y divide-zinc-100 dark:divide-white/5">
+                @forelse ($this->invitations as $invitation)
+                    <li wire:key="invitation-{{ $invitation->id }}" class="flex items-center gap-4 px-5 py-3.5">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full border border-dashed border-zinc-300 text-zinc-400 dark:border-white/20">
+                            <flux:icon.envelope variant="mini" class="size-4" />
+                        </span>
 
-            <flux:table>
-                <flux:table.columns>
-                    <flux:table.column>{{ __('Email') }}</flux:table.column>
-                    <flux:table.column>{{ __('Role') }}</flux:table.column>
-                    <flux:table.column>{{ __('Expires') }}</flux:table.column>
-                    <flux:table.column></flux:table.column>
-                </flux:table.columns>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium text-zinc-900 dark:text-white">{{ $invitation->email }}</p>
+                            <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ __('Expires') }} {{ $invitation->expires_at->format('d.m.Y.') }}</p>
+                        </div>
 
-                <flux:table.rows>
-                    @forelse ($this->invitations as $invitation)
-                        <flux:table.row :key="$invitation->id">
-                            <flux:table.cell>{{ $invitation->email }}</flux:table.cell>
-                            <flux:table.cell>{{ $invitation->role->label() }}</flux:table.cell>
-                            <flux:table.cell>{{ $invitation->expires_at->format('d.m.Y.') }}</flux:table.cell>
-                            <flux:table.cell align="end">
-                                <flux:button
-                                    wire:click="cancel({{ $invitation->id }})"
-                                    wire:confirm="{{ __('Are you sure you want to cancel this invitation?') }}"
-                                    variant="ghost"
-                                    size="sm"
-                                    icon="x-mark"
-                                    :aria-label="__('Cancel invitation')"
-                                />
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4">{{ __('No pending invitations.') }}</flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
-                </flux:table.rows>
-            </flux:table>
-        </div>
+                        <x-role-badge :role="$invitation->role" />
+
+                        <flux:button
+                            wire:click="cancel({{ $invitation->id }})"
+                            wire:confirm="{{ __('Are you sure you want to cancel this invitation?') }}"
+                            variant="ghost"
+                            size="sm"
+                            icon="x-mark"
+                            :tooltip="__('Cancel invitation')"
+                            :aria-label="__('Cancel invitation')"
+                        />
+                    </li>
+                @empty
+                    <li>
+                        <x-empty-state icon="envelope" :title="__('No pending invitations.')" :description="__('Invite a doctor or a colleague and they will show up here until they join.')" />
+                    </li>
+                @endforelse
+            </ul>
+        </x-panel>
     @endcan
 
-    <flux:modal name="invite-member" class="md:w-lg">
+    <flux:modal name="invite-member" class="md:w-md">
         <form wire:submit="invite" class="space-y-6">
-            <flux:heading size="lg">{{ __('Invite member') }}</flux:heading>
+            <div>
+                <flux:heading size="lg">{{ __('Invite member') }}</flux:heading>
+                <flux:text class="mt-1">{{ __('We will email them a link to join your optics.') }}</flux:text>
+            </div>
 
-            <flux:input wire:model="email" :label="__('Email')" type="email" required />
+            <flux:input wire:model="email" :label="__('Email')" type="email" icon="envelope" placeholder="ana@example.com" required />
 
-            <flux:select wire:model="role" :label="__('Role')">
-                <flux:select.option :value="OrganizationRole::Doctor->value">{{ OrganizationRole::Doctor->label() }}</flux:select.option>
-                <flux:select.option :value="OrganizationRole::Staff->value">{{ OrganizationRole::Staff->label() }}</flux:select.option>
-            </flux:select>
+            <flux:radio.group wire:model="role" :label="__('Role')" variant="cards" class="max-sm:flex-col">
+                <flux:radio :value="OrganizationRole::Doctor->value" :label="OrganizationRole::Doctor->label()" :description="__('Adds patients and examinations.')" />
+                <flux:radio :value="OrganizationRole::Staff->value" :label="OrganizationRole::Staff->label()" :description="__('Looks up patients and prints prescriptions.')" />
+            </flux:radio.group>
 
             <div class="flex justify-end gap-2">
                 <flux:modal.close>
-                    <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
+                    <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
 
-                <flux:button variant="primary" type="submit">{{ __('Send invitation') }}</flux:button>
+                <flux:button variant="primary" type="submit" icon="paper-airplane">{{ __('Send invitation') }}</flux:button>
             </div>
         </form>
     </flux:modal>
