@@ -1,27 +1,49 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white dark:bg-zinc-800">
-        <flux:sidebar sticky collapsible class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+    <body class="min-h-screen bg-zinc-50 antialiased dark:bg-zinc-950">
+        @php
+            $currentOrganization = app()->bound('currentOrganization') ? app('currentOrganization') : null;
+        @endphp
+
+        <flux:sidebar sticky collapsible class="border-e border-zinc-200/80 bg-white dark:border-white/10 dark:bg-zinc-900">
             <flux:sidebar.header>
                 <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse />
             </flux:sidebar.header>
 
+            @if ($currentOrganization)
+                <div class="mx-1 flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50 p-2.5 in-data-flux-sidebar-collapsed-desktop:hidden dark:border-white/10 dark:bg-white/5">
+                    @if ($currentOrganization->logoUrl())
+                        <img src="{{ $currentOrganization->logoUrl() }}" alt="" class="size-8 rounded-lg bg-white object-contain p-0.5 ring-1 ring-zinc-200 dark:ring-white/10">
+                    @else
+                        <x-initials-avatar :name="$currentOrganization->name" class="size-8! rounded-lg!" />
+                    @endif
+
+                    <div class="min-w-0 leading-tight">
+                        <p class="truncate text-sm font-semibold text-zinc-900 dark:text-white">{{ $currentOrganization->name }}</p>
+                        <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ auth()->user()->roleIn($currentOrganization->id)?->label() }}</p>
+                    </div>
+                </div>
+            @endif
+
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                <flux:sidebar.group :heading="__('Practice')" class="grid">
+                    <flux:sidebar.item icon="squares-2x2" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('patients.index')" :current="request()->routeIs('patients.*')" wire:navigate>
                         {{ __('Patients') }}
                     </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                <flux:sidebar.group :heading="__('Organization')" class="grid">
                     <flux:sidebar.item icon="user-group" :href="route('team.index')" :current="request()->routeIs('team.*')" wire:navigate>
                         {{ __('Team') }}
                     </flux:sidebar.item>
-                    @if (app()->bound('currentOrganization') && auth()->user()->can('update', app('currentOrganization')))
+                    @if ($currentOrganization && auth()->user()->can('update', $currentOrganization))
                         <flux:sidebar.item icon="building-storefront" :href="route('organization.edit')" :current="request()->routeIs('organization.*')" wire:navigate>
                             {{ __('Optics settings') }}
                         </flux:sidebar.item>
@@ -35,8 +57,10 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
+        <flux:header class="border-b border-zinc-200/80 bg-white lg:hidden dark:border-white/10 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
+
+            <x-app-logo href="{{ route('dashboard') }}" class="ms-2" wire:navigate />
 
             <flux:spacer />
 

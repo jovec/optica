@@ -115,38 +115,76 @@ new #[Title('Optics settings')] class extends Component {
     }
 }; ?>
 
-<div class="max-w-2xl space-y-6">
-    <flux:heading size="xl">{{ __('Optics settings') }}</flux:heading>
+<div class="space-y-8">
+    <x-page-header :title="__('Optics settings')" :description="__('How your optics appears to patients and on printed prescriptions.')" />
 
     <form wire:submit="save" class="space-y-6">
-        <flux:input wire:model="name" :label="__('Optics name')" required />
-
-        <div class="grid gap-4 sm:grid-cols-2">
-            <flux:input wire:model="address" :label="__('Address')" />
-            <flux:input wire:model="city" :label="__('City')" />
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2">
-            <flux:input wire:model="phone" :label="__('Phone')" type="tel" />
-            <flux:input wire:model="email" :label="__('Email')" type="email" />
-        </div>
-
-        <div class="space-y-3">
-            <flux:label>{{ __('Logo') }}</flux:label>
-
-            @if ($logo?->isPreviewable())
-                <img src="{{ $logo->temporaryUrl() }}" alt="" class="h-16">
-            @elseif ($this->organization()->logoUrl())
-                <div class="flex items-center gap-4">
-                    <img src="{{ $this->organization()->logoUrl() }}" alt="{{ $name }}" class="h-16">
-                    <flux:button wire:click="removeLogo" variant="ghost" size="sm" icon="trash">{{ __('Remove logo') }}</flux:button>
+        <x-panel>
+            <div class="grid gap-6 p-5 md:grid-cols-3 md:gap-10 md:p-6">
+                <div>
+                    <h2 class="text-[15px] font-semibold text-zinc-900 dark:text-white">{{ __('Logo') }}</h2>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('Shown on the printed prescription. Up to 1 MB.') }}</p>
                 </div>
-            @endif
 
-            <flux:input wire:model="logo" type="file" accept="image/*" />
-            <flux:description>{{ __('Shown on the printed prescription. Up to 1 MB.') }}</flux:description>
-        </div>
+                <div class="flex items-center gap-5 md:col-span-2">
+                    <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
+                        @if ($logo?->isPreviewable())
+                            <img src="{{ $logo->temporaryUrl() }}" alt="" class="size-full object-contain p-2">
+                        @elseif ($this->organization()->logoUrl())
+                            <img src="{{ $this->organization()->logoUrl() }}" alt="{{ $name }}" class="size-full object-contain p-2">
+                        @else
+                            <flux:icon.photo class="size-7 text-zinc-300 dark:text-zinc-600" />
+                        @endif
+                    </div>
 
-        <flux:button type="submit" variant="primary">{{ __('Save') }}</flux:button>
+                    <div class="space-y-2">
+                        <div class="flex gap-2">
+                            <label class="cursor-pointer">
+                                <span class="inline-flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-xs transition hover:bg-zinc-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">{{ __('Upload logo') }}</span>
+                                <input type="file" wire:model="logo" accept="image/*" class="sr-only">
+                            </label>
+
+                            @if ($this->organization()->logoUrl() && ! $logo)
+                                <flux:button wire:click="removeLogo" variant="ghost" size="sm">{{ __('Remove logo') }}</flux:button>
+                            @endif
+                        </div>
+
+                        <div wire:loading wire:target="logo" class="text-xs text-zinc-500">{{ __('Uploading...') }}</div>
+                        <flux:error name="logo" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid gap-6 border-t border-zinc-100 p-5 md:grid-cols-3 md:gap-10 md:p-6 dark:border-white/5">
+                <div>
+                    <h2 class="text-[15px] font-semibold text-zinc-900 dark:text-white">{{ __('General') }}</h2>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('The name of your optics as patients know it.') }}</p>
+                </div>
+
+                <div class="space-y-5 md:col-span-2">
+                    <flux:input wire:model="name" :label="__('Optics name')" required />
+
+                    <flux:input :label="__('Optics address')" :value="$this->organization()->primaryDomain()" icon="globe-alt" disabled />
+                </div>
+            </div>
+
+            <div class="grid gap-6 border-t border-zinc-100 p-5 md:grid-cols-3 md:gap-10 md:p-6 dark:border-white/5">
+                <div>
+                    <h2 class="text-[15px] font-semibold text-zinc-900 dark:text-white">{{ __('Contact') }}</h2>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('Printed in the header of every prescription.') }}</p>
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-2 md:col-span-2">
+                    <flux:input wire:model="address" :label="__('Address')" icon="map-pin" />
+                    <flux:input wire:model="city" :label="__('City')" />
+                    <flux:input wire:model="phone" :label="__('Phone')" type="tel" icon="phone" />
+                    <flux:input wire:model="email" :label="__('Email')" type="email" icon="envelope" />
+                </div>
+            </div>
+
+            <div class="flex justify-end border-t border-zinc-100 bg-zinc-50/60 px-5 py-4 md:px-6 dark:border-white/5 dark:bg-white/[0.02]">
+                <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
+            </div>
+        </x-panel>
     </form>
 </div>

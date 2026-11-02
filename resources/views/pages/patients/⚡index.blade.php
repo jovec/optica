@@ -109,59 +109,86 @@ new #[Title('Patients')] class extends Component {
     }
 }; ?>
 
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <flux:heading size="xl">{{ __('Patients') }}</flux:heading>
+<div class="space-y-8">
+    <x-page-header :title="__('Patients')" :description="__('Everyone who has visited your optics, in one place.')">
+        <x-slot:actions>
+            @can('create', App\Models\Patient::class)
+                <flux:button wire:click="create" variant="primary" icon="plus">{{ __('New patient') }}</flux:button>
+            @endcan
+        </x-slot:actions>
+    </x-page-header>
 
-        @can('create', App\Models\Patient::class)
-            <flux:button wire:click="create" variant="primary" icon="plus">{{ __('New patient') }}</flux:button>
-        @endcan
-    </div>
+    <x-panel>
+        <div class="flex flex-col gap-3 border-b border-zinc-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/5">
+            <div class="w-full sm:max-w-sm">
+                <flux:input wire:model.live.debounce.250ms="search" icon="magnifying-glass" :placeholder="__('Search patients...')" clearable />
+            </div>
 
-    <flux:input wire:model.live="search" icon="magnifying-glass" :placeholder="__('Search patients...')" />
+            <p class="text-sm text-zinc-500 tabular-nums dark:text-zinc-400">
+                {{ trans_choice(':count patient|:count patients', $this->patients->total(), ['count' => $this->patients->total()]) }}
+            </p>
+        </div>
 
-    <flux:table :paginate="$this->patients">
-        <flux:table.columns>
-            <flux:table.column>{{ __('Name') }}</flux:table.column>
-            <flux:table.column>{{ __('Date of birth') }}</flux:table.column>
-            <flux:table.column>{{ __('Phone') }}</flux:table.column>
-            <flux:table.column>{{ __('Email') }}</flux:table.column>
-            <flux:table.column></flux:table.column>
-        </flux:table.columns>
+        @if ($this->patients->isEmpty())
+            <x-empty-state
+                icon="users"
+                :title="$search !== '' ? __('No patients match your search.') : __('No patients yet.')"
+                :description="$search !== '' ? __('Try a different name.') : __('Add your first patient to start keeping records.')"
+            />
+        @else
+            <div class="px-5 pb-2">
+                <flux:table :paginate="$this->patients">
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('Name') }}</flux:table.column>
+                        <flux:table.column class="max-md:hidden">{{ __('Date of birth') }}</flux:table.column>
+                        <flux:table.column class="max-sm:hidden">{{ __('Phone') }}</flux:table.column>
+                        <flux:table.column></flux:table.column>
+                    </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse ($this->patients as $patient)
-                <flux:table.row :key="$patient->id">
-                    <flux:table.cell variant="strong">
-                        <flux:link :href="route('patients.show', $patient)" variant="ghost" wire:navigate>{{ $patient->last_name }} {{ $patient->first_name }}</flux:link>
-                    </flux:table.cell>
-                    <flux:table.cell>{{ $patient->date_of_birth?->format('d.m.Y.') }}</flux:table.cell>
-                    <flux:table.cell>{{ $patient->phone }}</flux:table.cell>
-                    <flux:table.cell>{{ $patient->email }}</flux:table.cell>
-                    <flux:table.cell align="end">
-                        @can('update', $patient)
-                            <flux:button wire:click="edit({{ $patient->id }})" variant="ghost" size="sm" icon="pencil-square" :aria-label="__('Edit')" />
-                        @endcan
+                    <flux:table.rows>
+                        @foreach ($this->patients as $patient)
+                            <flux:table.row :key="$patient->id">
+                                <flux:table.cell>
+                                    <a href="{{ route('patients.show', $patient) }}" wire:navigate class="group flex items-center gap-3">
+                                        <x-initials-avatar :name="$patient->first_name.' '.$patient->last_name" />
 
-                        @can('delete', $patient)
-                            <flux:button
-                                wire:click="delete({{ $patient->id }})"
-                                wire:confirm="{{ __('Are you sure you want to delete this patient?') }}"
-                                variant="ghost"
-                                size="sm"
-                                icon="trash"
-                                :aria-label="__('Delete')"
-                            />
-                        @endcan
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5">{{ __('No patients yet.') }}</flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+                                        <div class="min-w-0">
+                                            <p class="truncate font-medium text-zinc-900 group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">{{ $patient->last_name }} {{ $patient->first_name }}</p>
+                                            @if ($patient->email)
+                                                <p class="truncate text-xs text-zinc-500 dark:text-zinc-400">{{ $patient->email }}</p>
+                                            @endif
+                                        </div>
+                                    </a>
+                                </flux:table.cell>
+                                <flux:table.cell class="tabular-nums max-md:hidden">{{ $patient->date_of_birth?->format('d.m.Y.') ?? '—' }}</flux:table.cell>
+                                <flux:table.cell class="tabular-nums max-sm:hidden">{{ $patient->phone ?? '—' }}</flux:table.cell>
+                                <flux:table.cell align="end">
+                                    <div class="flex justify-end gap-1">
+                                        @can('update', $patient)
+                                            <flux:button wire:click="edit({{ $patient->id }})" variant="ghost" size="sm" icon="pencil-square" class="text-zinc-400!" :tooltip="__('Edit')" :aria-label="__('Edit')" />
+                                        @endcan
+
+                                        @can('delete', $patient)
+                                            <flux:button
+                                                wire:click="delete({{ $patient->id }})"
+                                                wire:confirm="{{ __('Are you sure you want to delete this patient?') }}"
+                                                variant="ghost"
+                                                size="sm"
+                                                icon="trash"
+                                                class="text-zinc-400! hover:text-red-600!"
+                                                :tooltip="__('Delete')"
+                                                :aria-label="__('Delete')"
+                                            />
+                                        @endcan
+                                    </div>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            </div>
+        @endif
+    </x-panel>
 
     <x-patients.form-modal :editing="$form->patient !== null" />
 </div>
