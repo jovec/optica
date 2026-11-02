@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Central Domain
+    |--------------------------------------------------------------------------
+    |
+    | The domain where new optics sign up. Every optics gets its own
+    | subdomain of it, e.g. "clearvision.localhost" or "clearvision.optika.app".
+    |
+    */
+
+    'central_domain' => env('CENTRAL_DOMAIN', 'localhost'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
