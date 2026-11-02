@@ -1,5 +1,6 @@
 <x-layouts::print :title="__('Prescription').' - '.$examination->patient->last_name">
-    <header class="border-b border-zinc-300 pb-4">
+    <header class="flex items-start justify-between gap-4 border-b border-zinc-300 pb-4">
+        <div>
         <h1 class="text-xl font-semibold">{{ $organization->name }}</h1>
 
         <p class="mt-1 text-sm text-zinc-600">
@@ -8,6 +9,11 @@
         <p class="text-sm text-zinc-600">
             {{ collect([$organization->phone, $organization->email])->filter()->implode(' · ') }}
         </p>
+        </div>
+
+        @if ($organization->logoUrl())
+            <img src="{{ $organization->logoUrl() }}" alt="{{ $organization->name }}" class="h-14">
+        @endif
     </header>
 
     <h2 class="mt-6 text-center text-lg font-semibold uppercase tracking-wide">{{ __('Eyeglass prescription') }}</h2>

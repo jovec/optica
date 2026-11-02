@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureOrganizationMember;
 use App\Http\Middleware\IdentifyOrganization;
+use App\Support\CentralDomain;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'organization' => IdentifyOrganization::class,
             'member' => EnsureOrganizationMember::class,
         ]);
+
+        $middleware->redirectUsersTo(fn (Request $request) => CentralDomain::matches($request)
+            ? route('organizations.open')
+            : route('dashboard'));
 
         $middleware->prependToPriorityList(
             before: AuthenticatesRequests::class,

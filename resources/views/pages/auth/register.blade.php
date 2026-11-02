@@ -1,12 +1,34 @@
 <x-layouts::auth :title="__('Register')">
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
+        <x-auth-header :title="__('Register your optics')" :description="__('Create your optics and your owner account')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
         <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
             @csrf
+            <!-- Optics -->
+            <flux:input
+                name="organization_name"
+                :label="__('Optics name')"
+                :value="old('organization_name')"
+                type="text"
+                required
+                autofocus
+                :placeholder="__('Clear Vision Optics')"
+            />
+
+            <flux:input.group :label="__('Optics address')" name="subdomain">
+                <flux:input
+                    name="subdomain"
+                    :value="old('subdomain')"
+                    type="text"
+                    required
+                    placeholder="clearvision"
+                />
+                <flux:input.group.suffix>.{{ App\Support\CentralDomain::name() }}</flux:input.group.suffix>
+            </flux:input.group>
+
             <!-- Name -->
             <flux:input
                 name="name"
@@ -14,7 +36,6 @@
                 :value="old('name')"
                 type="text"
                 required
-                autofocus
                 autocomplete="name"
                 :placeholder="__('Full name')"
             />

@@ -18,6 +18,14 @@
                     <flux:sidebar.item icon="users" :href="route('patients.index')" :current="request()->routeIs('patients.*')" wire:navigate>
                         {{ __('Patients') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="user-group" :href="route('team.index')" :current="request()->routeIs('team.*')" wire:navigate>
+                        {{ __('Team') }}
+                    </flux:sidebar.item>
+                    @if (app()->bound('currentOrganization') && auth()->user()->can('update', app('currentOrganization')))
+                        <flux:sidebar.item icon="building-storefront" :href="route('organization.edit')" :current="request()->routeIs('organization.*')" wire:navigate>
+                            {{ __('Optics settings') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
